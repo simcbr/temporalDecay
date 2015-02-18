@@ -18,9 +18,33 @@ from itertools import combinations
 Fdict={}
 LEFT=0
 RIGHT=1
-# assign x edges among k nodes and other i external nodes, to make sure these k nodes can be reached from an external node.
-# p  is the number of nodes (including k nodes) can be the target of edges
-# q is the external nodes which can be the source of edges. 
+
+# The basic idea is using dynamic programming, such that we try to separate these K nodes and root into two groups:  G1 and G2.  
+# G1 contains the root and K-i-1 nodes,  G2 contains i+1 nodes where one node is the “root” of G2.  Denote node v as a reference node which is the root of G2.
+# 
+# The difficult part is, there exists the edge between G1 and G2; and we should PREVENT duplicately counting the same case of having edge from v to a node u TWICE 
+#     1) u is in G1  2) u is in G2.  
+# 
+# To solve the problem, define a function S(), such that  S(k, k+1, q, x, side) defines the total number of graphs we can have by having x edges end in k+1 nodes 
+# (plus the root of these k nodes),  q is the number of external nodes;  x is the number of edges,  where the root can reach all k nodes.   
+# “side” is to specify G1 and G2:  LEFT for G1 case; RIGHT for G2 case; and the external nodes are on the opposite side of these k nodes (the reason to define RIGHT 
+# and LEFT side is to prevent duplicated case, and we will handle LEFT and RIGHT cases differently).   
+# 
+# 
+# The whole algorithm based on following two equations:
+# 
+# initial :        S(0,1,0,0)=1;  S(0,1,0,x)=0 for x>0
+# 
+# 1)  S(k, k+1, q, x, side)  = \sum_{i=0}^{k-1} {k-1 \choose i} * \sum_{k-i-1, x-i-1} S(k-i-1,k-i,i+1,j, LEFT) * S(i, i+1, k-i, x-j, RIGHT)
+# the \sum_{i=0}^{k-1} is to iterate all different size of G1 and G2;  {k-1 \choose i} is to include different combinations of nodes for specific sized G1 and G2.
+# 
+# 
+# 2)  S(k, k+1, q, x, LEFT) =  \sum_{l=0}^{min((k+1)*q, x)}  S(k, k+1, 0, x-l, LEFT) * {(k+1)*q \choose l}   :  
+#        for G1 (it contains root), allocate x-l edges end within k nodes and the root, and left l edges originates from q external nodes and end at these k+1 nodes.    
+#     S(k, k+1, q, x, RIGHT) = \sum_{l=1}^{min((k+1)*q, x)}  S(k, k+1, 0, x-l, LEFT) * { q \choose l}    :  
+#        allocate x-l edges end within k nodes and the reference node v of G2, and left l edges originates from q external nodes and end at node v.  
+#        l is greater than or equal 1, since there must have one edge from G1 to G2’s root v. This guarantees there are edged from G1 to v.
+
 def findF(k,p,q,x, side):
     
     #print k, p, q, x
