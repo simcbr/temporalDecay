@@ -1,1 +1,1 @@
-../../temporalDecay/priodict.py
+../Reachability/priodict.py
